@@ -46,11 +46,23 @@ def createSum(json_data,average_list):#Creates the average of the sum of trips p
         weekDay = dateTime.weekday()
         average_list[weekDay] = average_list[weekDay] + 1 #Increase count of trips for given day per one
 
+    data = {}
+
+    sonstige = [0] * 7 
+
     #Calculate the average of trips ordered by day
     for weekday in range(0,7):
+        biggestDepartments = count_departments(weekday,countOfDays[weekday],json_data)
         average_list[weekday] = average_list[weekday] / countOfDays[weekday] if countOfDays[weekday] > 0 else 1
+        departmentsum = biggestDepartments[0][1] + biggestDepartments[1][1] + biggestDepartments[2][1] 
+        sonstige[weekday] = average_list[weekday] - departmentsum
+        data[weekday] = [["Abteilung " + str(biggestDepartments[0][0]), biggestDepartments[0][1]],
+                          ["Abteilung " + str(biggestDepartments[1][0]), biggestDepartments[1][1]],
+                           ["Abteilung " + str(biggestDepartments[2][0]), biggestDepartments[2][1]],
+                            ["Sonstige ", sonstige[weekday]] ]
 
-    return average_list
+
+    return data
 
 
 def count_weekdays(start_date, end_date, weekday):
@@ -63,6 +75,42 @@ def count_weekdays(start_date, end_date, weekday):
         current_date += timedelta(days=1)
 
     return total
+
+def count_departments(weekDay,countOfDay,transportData):
+     r = requests.get("http://localhost:8080/departmentCategory") #Get all Data
+     json = r.json()#return all data as Jason
+
+     usedDepartmenArr = [0] * (len(json)+1)
+
+     
+
+     for item in transportData:
+
+        milliTime = item['created']
+        dateTime = currentMillisToDateTime(milliTime)  #get the weekday from item
+        weekDayFromItem = dateTime.weekday()
+       
+        departmentCata = item['departmentCategory']
+
+        if departmentCata != None and weekDayFromItem == weekDay:
+            id_value = departmentCata['id']
+            usedDepartmenArr[id_value]+=1
+     listClone= usedDepartmenArr.copy()
+    
+     usedDepartmenArr.sort(reverse=True)
+     listClone.index(usedDepartmenArr[0])
+
+
+
+     out1 = (listClone.index(usedDepartmenArr[0]), usedDepartmenArr[0] / countOfDay)
+     out2 = (listClone.index(usedDepartmenArr[1]), usedDepartmenArr[1] / countOfDay)
+     out3 = (listClone.index(usedDepartmenArr[2]), usedDepartmenArr[2]  / countOfDay)
+
+     return [out1,out2,out3]
+
+    
+
+
     
 def main(start_date,end_date,clinicID):
     sumList = [0] * 7 #Create new List to save sums in hours
@@ -72,3 +120,4 @@ def main(start_date,end_date,clinicID):
 
 x = [None] *10
 
+main(None,None)
