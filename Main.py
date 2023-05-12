@@ -331,9 +331,7 @@ def update_graph(n_clicks, clickData, start_date, end_date, hospital_id):
 
             r = sendRequest(start_date, end_date)
             dayData = getDataOfDay(r, day, hospital_id)
-            # Here you need to create a new plot function for the data from getDataOfDay
-            # You would replace the line below with that function call
-            return plot_day_data(dayData,day)
+            return plot_day_data(dayData,clickData['points'][0]['x'])
 
     # If the button hasn't been clicked, return an empty figure
     return go.Figure()
