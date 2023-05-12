@@ -7,7 +7,9 @@ from dateutil.relativedelta import relativedelta
 import calendar
 
 def sendRequest(start_date,end_date):
-        if(start_date == None or end_date == None):
+        print(start_date)
+        print(end_date)
+        if(start_date == None or start_date == '' or end_date == '' or end_date == None):
             r = requests.get("http://localhost:8080/patientArrival") #Get all Data
         else:
             dt_obj = datetime.strptime(start_date, '%d.%m.%Y %H:%M:%S')#Time in Milis
@@ -121,20 +123,26 @@ def count_departments(weekDay,countOfDay,transportData,hospitalID):
         out0 = (dp0, usedDepartmenArr[0] / countOfDay) if dp0 is not None else ("No department", 0)
         out1 = (dp1, usedDepartmenArr[1] / countOfDay) if dp1 is not None else ("No department", 0)
         out2 = (dp2, usedDepartmenArr[2] / countOfDay) if dp2 is not None else ("No department", 0)
-        # ...
+
 
         return [out0, out1, out2]
 
-def plot(data):
-        
-    import plotly.graph_objects as go
 
+
+
+import dash
+import dash_core_components as dcc
+import dash_html_components as html
+import plotly.graph_objects as go
+from dash.dependencies import Input, Output, State
+
+app = dash.Dash(__name__)
+
+def plot(data):
     fig = go.Figure()
 
-    # Assume that every day has the same number of tasks
     num_tasks_per_day = len(data[0])
 
-    # Create stacked bar for each task
     for i in range(num_tasks_per_day):
         fig.add_trace(go.Bar(
             x=list(data.keys()),
@@ -152,8 +160,40 @@ def plot(data):
         showlegend=False
     )
 
-    fig.show()
+    return fig
 
+
+app.layout = html.Div([
+    html.H1('Interactive Graph'),
+    dcc.Graph(id='graph'),
+    html.Label('Start Date'),
+    dcc.Input(id='start-date', type='text', value=''),
+    html.Label('End Date'),
+    dcc.Input(id='end-date', type='text', value=''),
+    html.Label('Hospital ID'),
+    dcc.Input(id='hospital-id', type='text', value=''),
+    html.Button('Update Graph', id='update-button', n_clicks=0),
+])
+
+@app.callback(
+    Output('graph', 'figure'),
+    Input('update-button', 'n_clicks'),
+    State('start-date', 'value'),
+    State('end-date', 'value'),
+    State('hospital-id', 'value')
+)
+def update_graph(n_clicks, start_date, end_date, hospital_id):
+    if n_clicks > 0:
+        sum_list = [0] * 7
+        r = sendRequest(start_date, end_date)
+        sum_list = createSum(r, sum_list, hospital_id)
+        return plot(sum_list)
+
+    # If the button hasn't been clicked, return an empty figure
+    return go.Figure()
+
+if __name__ == '__main__':
+    app.run_server(debug=True)
 
 
     
