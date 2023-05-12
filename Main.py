@@ -148,6 +148,6 @@ def main(start_date,end_date,clinicID):
     plot(sumList)
     print(sumList)
 
-x = [None] *10
+x = [None] * 10
 
-main(None,None,None)
+main(None,None,0)
