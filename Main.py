@@ -150,4 +150,4 @@ def main(start_date,end_date,clinicID):
 
 x = [None] * 10
 
-main(None,None,0)
+main(None,None,None)
