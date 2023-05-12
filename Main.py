@@ -44,18 +44,20 @@ def createSum(json_data,average_list,hospitalID):#Creates the average of the sum
         milliTime = item['created']
         dateTime = currentMillisToDateTime(milliTime)
         weekDay = dateTime.weekday()
-        if(hospitalID != None or item['hospitalId'] == hospitalID): # If we are filtering for HospitalID, only count up if HospitalID is matching
+        if(hospitalID == None or item['hospitalId'] == hospitalID): # If we are filtering for HospitalID, only count up if HospitalID is matching
             average_list[weekDay] = average_list[weekDay] + 1 #Increase count of trips for given day per one
+ 
 
     data = {}
 
     sonstige = [0] * 7 
 
-    #Calculate the average of trips ordered by day
+    #Calculate the average of trips ordered by day, save the averages in data dictionary
     for weekday in range(0,7):
         biggestDepartments = count_departments(weekday,countOfDays[weekday],json_data,hospitalID)
         average_list[weekday] = average_list[weekday] / countOfDays[weekday] if countOfDays[weekday] > 0 else 1
         departmentsum = biggestDepartments[0][1] + biggestDepartments[1][1] + biggestDepartments[2][1] 
+        
         sonstige[weekday] = average_list[weekday] - departmentsum
         data[weekday] = [["Sonstige ", sonstige[weekday]],
                         ["Abteilung " + str(biggestDepartments[0][0]), biggestDepartments[0][1]],
@@ -92,15 +94,17 @@ def count_departments(weekDay,countOfDay,transportData,hospitalID):
             weekDayFromItem = dateTime.weekday()
         
             departmentCata = item['departmentCategory']
-
             if departmentCata != None and weekDayFromItem == weekDay:
-                if(hospitalID != None or item['hospitalId'] == hospitalID):
+                if(hospitalID == None or item['hospitalId'] == hospitalID):
+                    
                     id_value = departmentCata['id']
                     usedDepartmenArr[id_value]+=1
         listClone= usedDepartmenArr.copy()
         
         usedDepartmenArr.sort(reverse=True)
         listClone.index(usedDepartmenArr[0])
+
+        dp0, dp1, dp2 = None, None, None
 
         for item in transportData:
             department = item['departmentCategory']
@@ -114,11 +118,12 @@ def count_departments(weekDay,countOfDay,transportData,hospitalID):
             if(listClone.index(usedDepartmenArr[2]) == department['id']):
                 dp2 = department['name']
 
-        out0 = (dp0, usedDepartmenArr[0] / countOfDay)
-        out1 = (dp1, usedDepartmenArr[1] / countOfDay)
-        out2 = (dp2, usedDepartmenArr[2]  / countOfDay)
+        out0 = (dp0, usedDepartmenArr[0] / countOfDay) if dp0 is not None else ("No department", 0)
+        out1 = (dp1, usedDepartmenArr[1] / countOfDay) if dp1 is not None else ("No department", 0)
+        out2 = (dp2, usedDepartmenArr[2] / countOfDay) if dp2 is not None else ("No department", 0)
+        # ...
 
-        return [out0,out1,out2]
+        return [out0, out1, out2]
 
 def plot(data):
         
@@ -160,4 +165,4 @@ def main(start_date,end_date,hospitalID):
 
 x = [None] * 10
 
-main(None,None,10)
+main(None,None,None)
