@@ -57,12 +57,22 @@ def count_weekdays(start_date, end_date, weekday):
         current_date += timedelta(days=1)
 
     return total
+
+def count_departments(weekday,countdays):#Creates the appartments
+     r = requests.get("http://localhost:8080/departmentCategory") #Get all Data
+     jason = r.json()#return all data as Jason
+
+     x = [len(jason)]
+ 
+
+
     
 def main(start_date,end_date):
     sumList = [0] * 7 #Create new List to save sums in hours
     r = sendRequest(start_date,end_date)
     sumList = createSum(r, sumList)
     print(sumList)
+
 
 
 main(None,None)
