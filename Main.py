@@ -64,11 +64,11 @@ def count_weekdays(start_date, end_date, weekday):
 
     return total
     
-def main(start_date,end_date):
+def main(start_date,end_date,clinicID):
     sumList = [0] * 7 #Create new List to save sums in hours
     r = sendRequest(start_date,end_date)
     sumList = createSum(r, sumList)
     print(sumList)
 
-
+x = [None] *10
 
