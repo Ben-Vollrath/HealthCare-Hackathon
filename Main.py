@@ -46,7 +46,8 @@ def createSum(json_data,average_list,hospitalID):#Creates the average of the sum
         milliTime = item['created']
         dateTime = currentMillisToDateTime(milliTime)
         weekDay = dateTime.weekday()
-        if(hospitalID == None or hospitalID == '' or item['hospitalId'] == hospitalID): # If we are filtering for HospitalID, only count up if HospitalID is matching
+        if(hospitalID == None or hospitalID == '' or item['hospitalId'] == int(hospitalID) ): # If we are filtering for HospitalID, only count up if HospitalID is matching
+            
             average_list[weekDay] = average_list[weekDay] + 1 #Increase count of trips for given day per one
  
 
@@ -65,7 +66,7 @@ def createSum(json_data,average_list,hospitalID):#Creates the average of the sum
                         ["Abteilung " + str(biggestDepartments[0][0]), biggestDepartments[0][1]],
                           ["Abteilung " + str(biggestDepartments[1][0]), biggestDepartments[1][1]],
                            ["Abteilung " + str(biggestDepartments[2][0]), biggestDepartments[2][1]]]
-    print(data)
+
 
     return data
 
@@ -97,7 +98,7 @@ def count_departments(weekDay,countOfDay,transportData,hospitalID):
         
             departmentCata = item['departmentCategory']
             if departmentCata != None and weekDayFromItem == weekDay:
-                if(hospitalID == None or hospitalID == '' or item['hospitalId'] == hospitalID):
+                if(hospitalID == None or hospitalID == '' or item['hospitalId'] == int(hospitalID)):
                     
                     id_value = departmentCata['id']
                     usedDepartmenArr[id_value]+=1
