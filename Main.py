@@ -173,51 +173,46 @@ def count_weekdays(start_date, end_date, weekday):
     return total
 
 def count_departments(weekDay,countOfDay,transportData,hospitalID):
-        countOfDay = 1 if countOfDay <= 0 else countOfDay
-        r = requests.get("http://localhost:8080/departmentCategory") #Get all Data
-        json = r.json()#return all data as Jason
+    countOfDay = 1 if countOfDay <= 0 else countOfDay
+    r = requests.get("http://localhost:8080/departmentCategory") #Get all Data
+    json = r.json()#return all data as Jason
 
-        usedDepartmenArr = [0] * (len(json)+1)
+    usedDepartmenArr = [0] * (len(json)+1)
 
-        
+    for item in transportData:
 
-        for item in transportData:
+        milliTime = item['created']
+        dateTime = currentMillisToDateTime(milliTime)  #get the weekday from item
+        weekDayFromItem = dateTime.weekday()
+    
+        departmentCata = item['departmentCategory']
+        if departmentCata != None and weekDayFromItem == weekDay:
+            if(hospitalID == None or hospitalID == '' or item['hospitalId'] == int(hospitalID)):
+                
+                id_value = departmentCata['id']
+                usedDepartmenArr[id_value]+=1
 
-            milliTime = item['created']
-            dateTime = currentMillisToDateTime(milliTime)  #get the weekday from item
-            weekDayFromItem = dateTime.weekday()
-        
-            departmentCata = item['departmentCategory']
-            if departmentCata != None and weekDayFromItem == weekDay:
-                if(hospitalID == None or hospitalID == '' or item['hospitalId'] == int(hospitalID)):
-                    
-                    id_value = departmentCata['id']
-                    usedDepartmenArr[id_value]+=1
-        listClone= usedDepartmenArr.copy()
-        
-        usedDepartmenArr.sort(reverse=True)
-        listClone.index(usedDepartmenArr[0])
+    sortedIndex = find_top_three(usedDepartmenArr) #get Index from the 3 Biggest
+    usedDepartmenArr.sort(reverse=True)
 
-        dp0, dp1, dp2 = None, None, None
+    dp0, dp1, dp2 = None, None, None
+    for item in transportData:
+        department = item['departmentCategory']
+        if(department == None):
+            continue
 
-        for item in transportData:
-            department = item['departmentCategory']
-            if(department == None):
-                continue
+        elif(sortedIndex[0] == department['id'] and dp0 is None):
+            dp0 = department['name']
+        elif(sortedIndex[1] == department['id'] and dp1 is None):
+            dp1 = department['name']
+        elif(sortedIndex[2] == department['id'] and dp2 is None):
+            dp2 = department['name']
 
-            if(listClone.index(usedDepartmenArr[0]) == department['id']):
-                dp0 = department['name']
-            if(listClone.index(usedDepartmenArr[1]) == department['id']):
-                dp1 = department['name']
-            if(listClone.index(usedDepartmenArr[2]) == department['id']):
-                dp2 = department['name']
+    out0 = (dp0, usedDepartmenArr[0] / countOfDay) if dp0 is not None else ("No department", 0)
+    out1 = (dp1, usedDepartmenArr[1] / countOfDay) if dp1 is not None else ("No department", 0)
+    out2 = (dp2, usedDepartmenArr[2] / countOfDay) if dp2 is not None else ("No department", 0)
 
-        out0 = (dp0, usedDepartmenArr[0] / countOfDay) if dp0 is not None else ("No department", 0)
-        out1 = (dp1, usedDepartmenArr[1] / countOfDay) if dp1 is not None else ("No department", 0)
-        out2 = (dp2, usedDepartmenArr[2] / countOfDay) if dp2 is not None else ("No department", 0)
-
-
-        return [out0, out1, out2]
+    return [out0, out1, out2]
 
 
 
@@ -291,16 +286,26 @@ def plot(data):
 
 
 app.layout = html.Div([
-    html.H1('Interaktives Datendarstellungsmodel zur Datebankintegrierten Datenauferbeitung'),
-    dcc.Graph(id='graph'),
-    html.Label('Start Date'),
-    dcc.Input(id='start-date', type='text', value=''),
-    html.Label('End Date'),
-    dcc.Input(id='end-date', type='text', value=''),
-    html.Label('Hospital ID'),
-    dcc.Input(id='hospital-id', type='text', value=''),
-    html.Button('Update Graph', id='update-button', n_clicks=0),
-], style={'backgroundColor': '#f0f0f0	', 'padding': '20px'})
+    html.H1('Interactive grafik', style={'textAlign': 'center', 'color': '#4B0082'}),
+    dcc.Graph(id='graph', style={'height': '70vh', 'width': '80vw', 'margin': 'auto'}),
+    html.Div([
+        html.Label('Start Date', style={'padding': '10px', 'color': '#4B0082'}),
+        dcc.Input(id='start-date', type='text', value='', style={'width': '150px'}),
+        html.Label('End Date', style={'padding': '10px', 'color': '#4B0082'}),
+        dcc.Input(id='end-date', type='text', value='', style={'width': '150px'}),
+        html.Label('Hospital ID', style={'padding': '10px', 'color': '#4B0082'}),
+        dcc.Input(id='hospital-id', type='text', value='', style={'width': '150px'}),
+        html.Button('Update Graph', id='update-button', n_clicks=0, style={
+            'background-color': '#4B0082', 'color': 'white', 'border': 'none', 'padding': '10px 20px',
+            'text-align': 'center', 'text-decoration': 'none', 'display': 'inline-block', 'font-size': '16px',
+            'margin': '4px 2px', 'cursor': 'pointer', 'border-radius': '12px'
+        }),
+    ], style={
+        'display': 'flex',
+        'justifyContent': 'space-around',
+        'padding': '20px'
+    }),
+], style={'backgroundColor': '#E6E6FA', 'padding': '20px'})
 
 @app.callback(
     Output('graph', 'figure'),
@@ -332,6 +337,16 @@ def update_graph(n_clicks, clickData, start_date, end_date, hospital_id):
 
     # If the button hasn't been clicked, return an empty figure
     return go.Figure()
+
+def find_top_three(lst):
+    # Erstellt eine Liste von Tupeln, die den Index und den Wert aus der ursprünglichen Liste enthalten
+    indexed_lst = list(enumerate(lst))
+
+    # Sortiert die Liste in absteigender Reihenfolge nach dem Wert
+    sorted_lst = sorted(indexed_lst, key=lambda x: x[1], reverse=True)
+
+    # Gibt die Indizes der ersten drei Elemente der sortierten Liste zurück
+    return [i for i, v in sorted_lst[:3]]
 
 if __name__ == '__main__':
     app.run_server(debug=True)
