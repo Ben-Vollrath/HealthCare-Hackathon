@@ -7,8 +7,6 @@ from dateutil.relativedelta import relativedelta
 import calendar
 
 def sendRequest(start_date,end_date):
-        print(start_date)
-        print(end_date)
         if(start_date == None or start_date == '' or end_date == '' or end_date == None):
             r = requests.get("http://localhost:8080/patientArrival") #Get all Data
         else:
@@ -138,10 +136,10 @@ def createSum(json_data,average_list,hospitalID):#Creates the average of the sum
         milliTime = item['created']
         dateTime = currentMillisToDateTime(milliTime)
         weekDay = dateTime.weekday()
+    
         if(hospitalID == None or hospitalID == '' or item['hospitalId'] == int(hospitalID) ): # If we are filtering for HospitalID, only count up if HospitalID is matching
-            
             average_list[weekDay] = average_list[weekDay] + 1 #Increase count of trips for given day per one
- 
+    
 
     data = {}
 
@@ -150,6 +148,7 @@ def createSum(json_data,average_list,hospitalID):#Creates the average of the sum
     #Calculate the average of trips ordered by day, save the averages in data dictionary
     for weekday in range(0,7):
         biggestDepartments = count_departments(weekday,countOfDays[weekday],json_data,hospitalID)
+
         average_list[weekday] = average_list[weekday] / countOfDays[weekday] if countOfDays[weekday] > 0 else average_list[weekDay]
         departmentsum = biggestDepartments[0][1] + biggestDepartments[1][1] + biggestDepartments[2][1] 
         
@@ -175,6 +174,7 @@ def count_weekdays(start_date, end_date, weekday):
     return total
 
 def count_departments(weekDay,countOfDay,transportData,hospitalID):
+        countOfDay = 1 if countOfDay <= 0 else countOfDay
         r = requests.get("http://localhost:8080/departmentCategory") #Get all Data
         json = r.json()#return all data as Jason
 
@@ -232,24 +232,30 @@ from dash.dependencies import Input, Output, State
 app = dash.Dash(__name__)
 
 def plot(data):
+    import plotly.express as px
     fig = go.Figure()
 
     num_tasks_per_day = len(data[0])
+    weekdays = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
+
+    colors = px.colors.qualitative.Pastel2 # use the Plotly color palette
 
     for i in range(num_tasks_per_day):
         fig.add_trace(go.Bar(
-            x=list(data.keys()),
+            x=weekdays,
             y=[data[day][i][1] for day in data],
             name=data[0][i][0],
             text=[data[day][i][0] for day in data],
             hoverinfo='text+y',
+            marker=dict(color=colors[i % len(colors)]), # set the color of the bar
+            textfont=dict(size=16), # set the size of the text inside the bars
         ))
 
     fig.update_layout(
         barmode='stack',
         title='Graphische Darstellung der Krankenfahrten',
-        xaxis={'title': 'Wochen Tag'},
-        yaxis={'title': 'Anzahl von Fahrten'},
+        xaxis={'title': 'Wochen Tag', 'titlefont': {'size': 18}}, # set the size of the x-axis title
+        yaxis={'title': 'Anzahl von Fahrten', 'titlefont': {'size': 18}}, # set the size of the y-axis title
         showlegend=False
     )
 
@@ -266,7 +272,7 @@ app.layout = html.Div([
     html.Label('Hospital ID'),
     dcc.Input(id='hospital-id', type='text', value=''),
     html.Button('Update Graph', id='update-button', n_clicks=0),
-])
+], style={'backgroundColor': '#B8E0EB	', 'padding': '20px'})
 
 @app.callback(
     Output('graph', 'figure'),
