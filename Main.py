@@ -29,7 +29,7 @@ def currentMillisToDateTime(currentMillis): #Converts currentMilis Time to Date 
     return dateTime
 
     
-def createSum(json_data,average_list):#Creates the average of the sum of trips per day sorted to weekdays
+def createSum(json_data,average_list,hospitalID):#Creates the average of the sum of trips per day sorted to weekdays
 
     #Get the count of weekdays occuring in given Time Frame
     start_date = currentMillisToDateTime(json_data[0]['created'])
@@ -44,7 +44,8 @@ def createSum(json_data,average_list):#Creates the average of the sum of trips p
         milliTime = item['created']
         dateTime = currentMillisToDateTime(milliTime)
         weekDay = dateTime.weekday()
-        average_list[weekDay] = average_list[weekDay] + 1 #Increase count of trips for given day per one
+        if(hospitalID != None or item['hospitalId'] == hospitalID): # If we are filtering for HospitalID, only count up if HospitalID is matching
+            average_list[weekDay] = average_list[weekDay] + 1 #Increase count of trips for given day per one
 
     data = {}
 
@@ -52,7 +53,7 @@ def createSum(json_data,average_list):#Creates the average of the sum of trips p
 
     #Calculate the average of trips ordered by day
     for weekday in range(0,7):
-        biggestDepartments = count_departments(weekday,countOfDays[weekday],json_data)
+        biggestDepartments = count_departments(weekday,countOfDays[weekday],json_data,hospitalID)
         average_list[weekday] = average_list[weekday] / countOfDays[weekday] if countOfDays[weekday] > 0 else 1
         departmentsum = biggestDepartments[0][1] + biggestDepartments[1][1] + biggestDepartments[2][1] 
         sonstige[weekday] = average_list[weekday] - departmentsum
@@ -76,7 +77,7 @@ def count_weekdays(start_date, end_date, weekday):
 
     return total
 
-def count_departments(weekDay,countOfDay,transportData):
+def count_departments(weekDay,countOfDay,transportData,hospitalID):
         r = requests.get("http://localhost:8080/departmentCategory") #Get all Data
         json = r.json()#return all data as Jason
 
@@ -93,8 +94,9 @@ def count_departments(weekDay,countOfDay,transportData):
             departmentCata = item['departmentCategory']
 
             if departmentCata != None and weekDayFromItem == weekDay:
-                id_value = departmentCata['id']
-                usedDepartmenArr[id_value]+=1
+                if(hospitalID != None or item['hospitalId'] == hospitalID):
+                    id_value = departmentCata['id']
+                    usedDepartmenArr[id_value]+=1
         listClone= usedDepartmenArr.copy()
         
         usedDepartmenArr.sort(reverse=True)
@@ -104,7 +106,7 @@ def count_departments(weekDay,countOfDay,transportData):
             department = item['departmentCategory']
             if(department == None):
                 continue
-            
+
             if(listClone.index(usedDepartmenArr[0]) == department['id']):
                 dp0 = department['name']
             if(listClone.index(usedDepartmenArr[1]) == department['id']):
@@ -150,14 +152,12 @@ def plot(data):
 
 
     
-def main(start_date,end_date,clinicID):
+def main(start_date,end_date,hospitalID):
     sumList = [0] * 7 #Create new List to save sums in hours
     r = sendRequest(start_date,end_date)
-    sumList = createSum(r, sumList)
-    print(sumList)
+    sumList = createSum(r, sumList,hospitalID)
     plot(sumList)
-    print(sumList)
 
 x = [None] * 10
 
-main(None,None,None)
+main(None,None,10)
