@@ -56,10 +56,10 @@ def createSum(json_data,average_list):#Creates the average of the sum of trips p
         average_list[weekday] = average_list[weekday] / countOfDays[weekday] if countOfDays[weekday] > 0 else 1
         departmentsum = biggestDepartments[0][1] + biggestDepartments[1][1] + biggestDepartments[2][1] 
         sonstige[weekday] = average_list[weekday] - departmentsum
-        data[weekday] = [["Abteilung " + str(biggestDepartments[0][0]), biggestDepartments[0][1]],
+        data[weekday] = [["Sonstige ", sonstige[weekday]],
+                        ["Abteilung " + str(biggestDepartments[0][0]), biggestDepartments[0][1]],
                           ["Abteilung " + str(biggestDepartments[1][0]), biggestDepartments[1][1]],
-                           ["Abteilung " + str(biggestDepartments[2][0]), biggestDepartments[2][1]],
-                            ["Sonstige ", sonstige[weekday]] ]
+                           ["Abteilung " + str(biggestDepartments[2][0]), biggestDepartments[2][1]]]
 
 
     return data
@@ -108,7 +108,35 @@ def count_departments(weekDay,countOfDay,transportData):
 
      return [out1,out2,out3]
 
-    
+def plot(data):
+        
+    import plotly.graph_objects as go
+
+    fig = go.Figure()
+
+    # Assume that every day has the same number of tasks
+    num_tasks_per_day = len(data[0])
+
+    # Create stacked bar for each task
+    for i in range(num_tasks_per_day):
+        fig.add_trace(go.Bar(
+            x=list(data.keys()),
+            y=[data[day][i][1] for day in data],
+            name=data[0][i][0],
+            text=[data[day][i][0] for day in data],
+            hoverinfo='text+y',
+        ))
+
+    fig.update_layout(
+        barmode='stack',
+        title='Graphische Darstellung der Krankenfahrten',
+        xaxis={'title': 'Wochen Tag'},
+        yaxis={'title': 'Anzahl von Fahrten'},
+        showlegend=False
+    )
+
+    fig.show()
+
 
 
     
@@ -117,7 +145,9 @@ def main(start_date,end_date,clinicID):
     r = sendRequest(start_date,end_date)
     sumList = createSum(r, sumList)
     print(sumList)
+    plot(sumList)
+    print(sumList)
 
 x = [None] *10
 
-main(None,None)
+main(None,None,None)
