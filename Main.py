@@ -31,7 +31,6 @@ def getDataOfDay(json_data, day, hospitalID):#Gets the Amount of Transports on a
     for weekday in range(0,7):
         countOfDays[weekday] = count_weekdays(start_date,end_date,weekday)
     countOfDay = countOfDays[day]
-    print(str(countOfDay) + "s")
     
     hours_data_list = [0] * 24 #used to store amount of drives in given hour frame
     for item in json_data:
@@ -272,7 +271,7 @@ app.layout = html.Div([
     html.Label('Hospital ID'),
     dcc.Input(id='hospital-id', type='text', value=''),
     html.Button('Update Graph', id='update-button', n_clicks=0),
-], style={'backgroundColor': '#B8E0EB	', 'padding': '20px'})
+], style={'backgroundColor': '#f0f0f0	', 'padding': '20px'})
 
 @app.callback(
     Output('graph', 'figure'),
