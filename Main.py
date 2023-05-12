@@ -77,36 +77,46 @@ def count_weekdays(start_date, end_date, weekday):
     return total
 
 def count_departments(weekDay,countOfDay,transportData):
-     r = requests.get("http://localhost:8080/departmentCategory") #Get all Data
-     json = r.json()#return all data as Jason
+        r = requests.get("http://localhost:8080/departmentCategory") #Get all Data
+        json = r.json()#return all data as Jason
 
-     usedDepartmenArr = [0] * (len(json)+1)
+        usedDepartmenArr = [0] * (len(json)+1)
 
-     
+        
 
-     for item in transportData:
+        for item in transportData:
 
-        milliTime = item['created']
-        dateTime = currentMillisToDateTime(milliTime)  #get the weekday from item
-        weekDayFromItem = dateTime.weekday()
-       
-        departmentCata = item['departmentCategory']
+            milliTime = item['created']
+            dateTime = currentMillisToDateTime(milliTime)  #get the weekday from item
+            weekDayFromItem = dateTime.weekday()
+        
+            departmentCata = item['departmentCategory']
 
-        if departmentCata != None and weekDayFromItem == weekDay:
-            id_value = departmentCata['id']
-            usedDepartmenArr[id_value]+=1
-     listClone= usedDepartmenArr.copy()
-    
-     usedDepartmenArr.sort(reverse=True)
-     listClone.index(usedDepartmenArr[0])
+            if departmentCata != None and weekDayFromItem == weekDay:
+                id_value = departmentCata['id']
+                usedDepartmenArr[id_value]+=1
+        listClone= usedDepartmenArr.copy()
+        
+        usedDepartmenArr.sort(reverse=True)
+        listClone.index(usedDepartmenArr[0])
 
+        for item in transportData:
+            department = item['departmentCategory']
+            if(department == None):
+                continue
+            
+            if(listClone.index(usedDepartmenArr[0]) == department['id']):
+                dp0 = department['name']
+            if(listClone.index(usedDepartmenArr[1]) == department['id']):
+                dp1 = department['name']
+            if(listClone.index(usedDepartmenArr[2]) == department['id']):
+                dp2 = department['name']
 
+        out0 = (dp0, usedDepartmenArr[0] / countOfDay)
+        out1 = (dp1, usedDepartmenArr[1] / countOfDay)
+        out2 = (dp2, usedDepartmenArr[2]  / countOfDay)
 
-     out1 = (listClone.index(usedDepartmenArr[0]), usedDepartmenArr[0] / countOfDay)
-     out2 = (listClone.index(usedDepartmenArr[1]), usedDepartmenArr[1] / countOfDay)
-     out3 = (listClone.index(usedDepartmenArr[2]), usedDepartmenArr[2]  / countOfDay)
-
-     return [out1,out2,out3]
+        return [out0,out1,out2]
 
 def plot(data):
         
