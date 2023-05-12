@@ -7,19 +7,25 @@ from dateutil.relativedelta import relativedelta
 import calendar
 
 def sendRequest(start_date,end_date):
-        if(start_date or end_date == None):
+        if(start_date == None or end_date == None):
             r = requests.get("http://localhost:8080/patientArrival") #Get all Data
         else:
-            mili_start_date = dt_obj = datetime.strptime(start_date).timestamp() * 1000 #Datetime to militime
-            mili_end_date = dt_obj = datetime.strptime(end_date).timestamp() * 1000 #Datetime to militime
-            r = requests.get("http://localhost:8080/patientArrivalfrom=" + mili_start_date + "&to" + mili_end_date) #Get Data in TimeFrame
+            dt_obj = datetime.strptime(start_date, '%d.%m.%Y %H:%M:%S')#Time in Milis
+            mili_start_date = int(dt_obj.timestamp() * 1000)
+
+            dt_obj = datetime.strptime(end_date, '%d.%m.%Y %H:%M:%S')#Time in Milis
+            mili_end_date = int(dt_obj.timestamp() * 1000)
+
+            r = requests.get("http://localhost:8080/patientArrival?from=" + str(mili_start_date) + "&to=" + str(mili_end_date)) #Get Data in TimeFrame
+
+            
         return r.json()# Return all Data as Json
 
 
 
 def currentMillisToDateTime(currentMillis): #Converts currentMilis Time to Date time
     unix = int(currentMillis) // 1000 # Convert to unix
-    dateTime = datetime.fromtimestamp(unix) # Convert to datetime
+    dateTime = datetime.fromtimestamp(unix) # Convert to datetime,
     return dateTime
 
     
@@ -42,7 +48,7 @@ def createSum(json_data,average_list):#Creates the average of the sum of trips p
 
     #Calculate the average of trips ordered by day
     for weekday in range(0,7):
-        average_list[weekday] = average_list[weekday] / countOfDays[weekday]
+        average_list[weekday] = average_list[weekday] / countOfDays[weekday] if countOfDays[weekday] > 0 else 1
 
     return average_list
 
@@ -74,6 +80,4 @@ def main(start_date,end_date):
     print(sumList)
 
 
-
-main(None,None)
 
