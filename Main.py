@@ -286,7 +286,7 @@ def plot(data):
 
 
 app.layout = html.Div([
-    html.H1('Interactive grafik', style={'textAlign': 'center', 'color': '#4B0082'}),
+    html.H1('Interface zu Darstellung von Krankenfahrten', style={'textAlign': 'center', 'color': '#4B0082'}),
     dcc.Graph(id='graph', style={'height': '70vh', 'width': '80vw', 'margin': 'auto'}),
     html.Div([
         html.Label('Start Date', style={'padding': '10px', 'color': '#4B0082'}),
