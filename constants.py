@@ -1,0 +1,1 @@
+API_ADRESS = "http://localhost:8080/"

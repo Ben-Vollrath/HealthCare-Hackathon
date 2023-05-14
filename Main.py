@@ -6,16 +6,18 @@ from datetime import timedelta, date
 from dateutil.relativedelta import relativedelta
 import calendar
 
+import constants as c
+
 def sendRequest(start_date,end_date):
         if(start_date == None or start_date == '' or end_date == '' or end_date == None):
-            r = requests.get("http://localhost:8080/patientArrival") #Get all Data
+            r = requests.get(c.API_ADRESS + "patientArrival") #Get all Data
         else:
             dt_obj = datetime.strptime(start_date, '%d.%m.%Y')#Time in Milis
             mili_start_date = int(dt_obj.timestamp() * 1000)
 
             dt_obj = datetime.strptime(end_date, '%d.%m.%Y')#Time in Milis
             mili_end_date = int(dt_obj.timestamp() * 1000)
-            r = requests.get("http://localhost:8080/patientArrival?from=" + str(mili_start_date) + "&to=" + str(mili_end_date)) #Get Data in TimeFrame
+            r = requests.get(c.API_ADRESS + "patientArrival?from=" + str(mili_start_date) + "&to=" + str(mili_end_date)) #Get Data in TimeFrame
 
             
         return r.json()# Return all Data as Json
@@ -64,7 +66,7 @@ def getDataOfDay(json_data, day, hospitalID):#Gets the Amount of Transports on a
 
 
 def hourlyCountDepartments(weekDay,hour,countOfDay,transportData,hospitalID):
-    r = requests.get("http://localhost:8080/departmentCategory") #Get all Data
+    r = requests.get(c.API_ADRESS + "departmentCategory") #Get all Data
     json = r.json()#return all data as Jason
 
     usedDepartmenArr = [0] * (len(json)+1)
@@ -173,7 +175,7 @@ def count_weekdays(start_date, end_date, weekday):
 
 def count_departments(weekDay,countOfDay,transportData,hospitalID):
     countOfDay = 1 if countOfDay <= 0 else countOfDay
-    r = requests.get("http://localhost:8080/departmentCategory") #Get all Data
+    r = requests.get(c.API_ADRESS +  "departmentCategory") #Get all Data
     json = r.json()#return all data as Jason
 
     usedDepartmenArr = [0] * (len(json)+1)
