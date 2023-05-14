@@ -15,7 +15,6 @@ def sendRequest(start_date,end_date):
 
             dt_obj = datetime.strptime(end_date, '%d.%m.%Y')#Time in Milis
             mili_end_date = int(dt_obj.timestamp() * 1000)
-
             r = requests.get("http://localhost:8080/patientArrival?from=" + str(mili_start_date) + "&to=" + str(mili_end_date)) #Get Data in TimeFrame
 
             
@@ -148,7 +147,7 @@ def createSum(json_data,average_list,hospitalID):#Creates the average of the sum
     for weekday in range(0,7):
         biggestDepartments = count_departments(weekday,countOfDays[weekday],json_data,hospitalID)
 
-        average_list[weekday] = average_list[weekday] / countOfDays[weekday] if countOfDays[weekday] > 0 else average_list[weekDay]
+        average_list[weekday] = average_list[weekday] / countOfDays[weekday] if countOfDays[weekday] > 0 else average_list[weekday]
         departmentsum = biggestDepartments[0][1] + biggestDepartments[1][1] + biggestDepartments[2][1] 
         
         sonstige[weekday] = average_list[weekday] - departmentsum
