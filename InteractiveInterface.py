@@ -84,7 +84,7 @@ class InteractiveInterface:
                         r = self.dp.filterData(r, 'hospitalId', hospital_id)
 
 
-                    sum_list = self.dp.createSum(r, sum_list)
+                    sum_list = self.dp.getDataOfWeek(r)
                     return GraphPlot.plotStackedBarChartWeek(sum_list)
 
             elif 'graph' in changed_id:

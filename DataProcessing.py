@@ -82,171 +82,132 @@ class DataProcessing:
             current_date += timedelta(days=1)
 
         return total
-
-    def getDataOfDay(self,json_data, week_day):#Gets the Amount of Transports on a given weekday as average ordered by hour of day
-        """Gets the Average Amount of Transports per department on a given week_day ordered by hours of day
+        
+    def countDepartments(self,week_day : int ,transport_data : list ,hour = None ):
+        """Gets the count of the three biggest Departments on a given weekday and hour
 
         Args:
-            json_data (_type_): The Json Data to be processed
-            week_day (_type_): The WeekDay to be processed
+            week_day (int): The weekday to be counted
+            transport_data (list): The data to be processed
+            hour (_type_, optional): The hour to be counted. Defaults to None.
 
         Returns:
-            _type_: Returns a dict containing the average amount of transports per department on a given weekday ordered by hours of day
+            _type_: Returns the three biggest departments on a given weekday and hour
         """
+        countUsedDepartmentArr = [0] * (len(transport_data)+1)
 
-        #Get the amount of times given week day has occured in time -> used to calculate average value later
-        countOfDays = self.countOccurencesOfDays(json_data)
-        countOfDay = countOfDays[week_day]
+        for item in transport_data:
+            timeData = TimeConversions.convertCurrentMillisToDateTime(item['created'])
+            day_of_item = timeData.weekday()
+            hour_of_item = timeData.hour
+
+            department_category = item['departmentCategory']
+            if(department_category != None and day_of_item == week_day):
+                if(hour == None or (hour != None and hour_of_item == hour) ):
+                    countUsedDepartmentArr[department_category['id']] += 1
         
-        hours_data_list = [0] * 24 #used to store amount of drives in given hour frame
 
+        sortedIndex = self.find_top_three(countUsedDepartmentArr) #get Index from the 3 Biggest
 
-        for item in json_data:
-            milliTime = item['created']
-            dateTime = TimeConversions.convertCurrentMillisToDateTime(milliTime)
-            weekDay = dateTime.weekday()
-
-            if(weekDay==week_day): # We only need Data from the Weekday we are looking at and correct hospitalID
-                hour = dateTime.hour
-                hours_data_list[hour] += 1
-            #Get the average by dividing through amount of days    
-
-        data = {}
-
-        sonstige = [0] * 24
-        for hour in range(0,24):
-            hours_data_list[hour] = hours_data_list[hour] / countOfDay if countOfDay > 0 else hours_data_list[hour]
-            biggestDepartments = self.hourlyCountDepartments(week_day,hour, countOfDay,json_data)
-
-            departmentsum = biggestDepartments[0][1] + biggestDepartments[1][1] + biggestDepartments[2][1]
-            
-            sonstige = hours_data_list[hour] - departmentsum
-
-            
-            data[hour] = [["Sonstige ", sonstige],
-                            ["Abteilung " + str(biggestDepartments[0][0]), biggestDepartments[0][1]],
-                            ["Abteilung " + str(biggestDepartments[1][0]), biggestDepartments[1][1]],
-                            ["Abteilung " + str(biggestDepartments[2][0]), biggestDepartments[2][1]]]
-        return data
-        
-    def hourlyCountDepartments(self,weekDay,hour,countOfDay,transportData):
-        r = requests.get(c.API_ADRESS + "departmentCategory") #Get all Data
-        json = r.json()#return all data as Jason
-
-        usedDepartmenArr = [0] * (len(json)+1)
-
-        
-        for item in transportData:
-
-            milliTime = item['created']
-            dateTime = TimeConversions.convertCurrentMillisToDateTime(milliTime)  #get the weekday from item
-            weekDayFromItem = dateTime.weekday()
-            hourFromItem = dateTime.hour
-            
-
-
-            departmentCata = item['departmentCategory']
-            if departmentCata != None and weekDayFromItem == weekDay and hourFromItem == hour:
-                id_value = departmentCata['id']
-                usedDepartmenArr[id_value]+=1
-        listClone= usedDepartmenArr.copy()
-            
-        usedDepartmenArr.sort(reverse=True)
-        listClone.index(usedDepartmenArr[0])
+        countUsedDepartmentArr.sort(reverse=True)
 
         dp0, dp1, dp2 = None, None, None
 
-        for item in transportData:
+        for item in transport_data:
             department = item['departmentCategory']
             if(department == None):
                 continue
 
-            if(listClone.index(usedDepartmenArr[0]) == department['id']):
+            if(sortedIndex[0] == department['id']):
                 dp0 = department['name']
-            if(listClone.index(usedDepartmenArr[1]) == department['id']):
+            if(sortedIndex[1] == department['id']):
                 dp1 = department['name']
-            if(listClone.index(usedDepartmenArr[2]) == department['id']):
+            if(sortedIndex[2] == department['id']):
                 dp2 = department['name']
-
-        out0 = (dp0, usedDepartmenArr[0] / countOfDay) if dp0 is not None else ("No department", 0)
-        out1 = (dp1, usedDepartmenArr[1] / countOfDay) if dp1 is not None else ("No department", 0)
-        out2 = (dp2, usedDepartmenArr[2] / countOfDay) if dp2 is not None else ("No department", 0)
-
+        
+        out0 = [dp0, countUsedDepartmentArr[0]] if dp0 is not None else ("No department", 0)
+        out1 = [dp1, countUsedDepartmentArr[1]] if dp1 is not None else ("No department", 0)
+        out2 = [dp2, countUsedDepartmentArr[2]] if dp2 is not None else ("No department", 0)
 
         return [out0, out1, out2]
+    
+    def getDataOfWeekOrDay(self, transport_data : list, return_list : list, week_day : int):
+        """Gets the Data of a Week or Hour
 
-    def createSum(self,json_data,average_list):#Creates the average of the sum of trips per day sorted to weekdays
+        Args:
+            transport_data (list): THe data to be processed
+            return_list (list): The list to be filled with the data must be size 24 for hours and 7 for week
+            week_day (int): The weekday to be counted (only when return_list is size 24)
 
-        #Get the count of weekdays occuring in given Time Frame
-        countOfDays = self.countOccurencesOfDays(json_data)
-                
-        #Count amount of trips ordered by day
-        for item in json_data:
+        Returns:
+            _type_: Returns the data of a week or hour | Data is averaged
+        """
+        countOfDays = self.countOccurencesOfDays(transport_data)
+        return_list_len = len(return_list)
+
+        for item in transport_data:
             milliTime = item['created']
             dateTime = TimeConversions.convertCurrentMillisToDateTime(milliTime)
             weekDay = dateTime.weekday()
-            average_list[weekDay] = average_list[weekDay] + 1 #Increase count of trips for given day per one
-        
 
+            #Count amount of trips ordered by day/hour
+            if(return_list_len == 24): #If we want the data ordered by hours
+                if(weekDay==week_day): # Only get data from given weekday
+                    hour = dateTime.hour
+                    return_list[hour] += 1
+
+            elif(return_list_len == 7):#If we want the data ordered by weekdays
+                return_list[weekDay] += 1
+        
         data = {}
 
-        sonstige = [0] * 7  
+        sonstige = [0] * return_list_len
+        for x in range(0, return_list_len):
 
-        #Calculate the average of trips ordered by day, save the averages in data dictionary
-        for weekday in range(0,7):
-            biggestDepartments = self.count_departments(weekday,countOfDays[weekday],json_data)
-
-            average_list[weekday] = average_list[weekday] / countOfDays[weekday] if countOfDays[weekday] > 0 else average_list[weekday]
-            departmentsum = biggestDepartments[0][1] + biggestDepartments[1][1] + biggestDepartments[2][1] 
+            biggestDepartments = self.countDepartments(week_day if return_list_len == 24 else x , transport_data , x if return_list_len == 24 else None) #Get the 3 biggest departments
             
-            sonstige[weekday] = average_list[weekday] - departmentsum
-            data[weekday] = [["Sonstige ", sonstige[weekday]],
+
+
+            return_list[x] = return_list[x] / (countOfDays[x] if return_list_len == 7 else countOfDays[week_day])
+
+            for i in range(0, len(biggestDepartments)):
+                biggestDepartments[i][1] = biggestDepartments[i][1] / (countOfDays[x] if return_list_len == 7 else countOfDays[week_day])
+
+            sum_of_departments = biggestDepartments[0][1] + biggestDepartments[1][1] + biggestDepartments[2][1]
+
+            sonstige = return_list[x] - sum_of_departments
+
+            data[x] = [["Sonstige ", sonstige],
                             ["Abteilung " + str(biggestDepartments[0][0]), biggestDepartments[0][1]],
                             ["Abteilung " + str(biggestDepartments[1][0]), biggestDepartments[1][1]],
                             ["Abteilung " + str(biggestDepartments[2][0]), biggestDepartments[2][1]]]
-
-
+        
         return data
 
-    def count_departments(self,weekDay,countOfDay,transportData):
-        countOfDay = 1 if countOfDay <= 0 else countOfDay
-        r = requests.get(c.API_ADRESS +  "departmentCategory") #Get all Data
-        json = r.json()#return all data as Jason
+    def getDataOfDay(self,json_data, week_day):
+        """Gets the Data of a Day
 
-        usedDepartmenArr = [0] * (len(json)+1)
+        Args:
+            json_data (_type_): The data to be processed
+            week_day (_type_): The weekday to be counted
 
-        for item in transportData:
+        Returns:
+            _type_: Returns the data of a day
+        """
+        return_list = [0] * 24
+        return self.getDataOfWeekOrDay(json_data, return_list, week_day)           
 
-            milliTime = item['created']
-            dateTime = TimeConversions.convertCurrentMillisToDateTime(milliTime)  #get the weekday from item
-            weekDayFromItem = dateTime.weekday()
-        
-            departmentCata = item['departmentCategory']
-            if departmentCata != None and weekDayFromItem == weekDay:
-                id_value = departmentCata['id']
-                usedDepartmenArr[id_value]+=1
+    def getDataOfWeek(self,json_data):
+        """Gets the Data of a Week
 
-        sortedIndex = self.find_top_three(usedDepartmenArr) #get Index from the 3 Biggest
-        usedDepartmenArr.sort(reverse=True)
+        Args:
+            json_data (_type_): The data to be processed
 
-        dp0, dp1, dp2 = None, None, None
-        for item in transportData:
-            department = item['departmentCategory']
-            if(department == None):
-                continue
-
-            elif(sortedIndex[0] == department['id'] and dp0 is None):
-                dp0 = department['name']
-            elif(sortedIndex[1] == department['id'] and dp1 is None):
-                dp1 = department['name']
-            elif(sortedIndex[2] == department['id'] and dp2 is None):
-                dp2 = department['name']
-
-        out0 = (dp0, usedDepartmenArr[0] / countOfDay) if dp0 is not None else ("No department", 0)
-        out1 = (dp1, usedDepartmenArr[1] / countOfDay) if dp1 is not None else ("No department", 0)
-        out2 = (dp2, usedDepartmenArr[2] / countOfDay) if dp2 is not None else ("No department", 0)
-
-        return [out0, out1, out2]
+        Returns:
+            _type_: Returns the data of a week
+        """
+        return_list = [0] * 7
+        return self.getDataOfWeekOrDay(json_data, return_list, None)
 
     def find_top_three(self,lst):
         """Gets the 3 biggest elements in a list
