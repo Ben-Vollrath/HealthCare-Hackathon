@@ -75,9 +75,16 @@ class InteractiveInterface:
             changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
             if 'update-button' in changed_id: # If the button has been clicked
                 if n_clicks > 0:
+
                     sum_list = [0] * 7
                     r = self.dp.sendRequest(start_date, end_date)
-                    sum_list = self.dp.createSum(r, sum_list, hospital_id)
+
+                    #Filter the data if a hospital id is given
+                    if(hospital_id != ''):
+                        r = self.dp.filterData(r, 'hospitalId', hospital_id)
+
+
+                    sum_list = self.dp.createSum(r, sum_list)
                     return GraphPlot.plotStackedBarChartWeek(sum_list)
 
             elif 'graph' in changed_id:
@@ -86,7 +93,13 @@ class InteractiveInterface:
                     day = weekdays.index(clickData['points'][0]['x'])
 
                     r = self.dp.sendRequest(start_date, end_date)
-                    dayData = self.dp.getDataOfDay(r, day, hospital_id)
+
+                    #Filter the data if a hospital id is given
+                    if(hospital_id != ''):
+                        r = self.dp.filterData(r, 'hospitalId', hospital_id)
+
+
+                    dayData = self.dp.getDataOfDay(r, day)
                     return GraphPlot.plotStackedBarChartDay(dayData,clickData['points'][0]['x'])
 
             # If the button hasn't been clicked, return an empty figure
