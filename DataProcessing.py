@@ -22,17 +22,40 @@ class DataProcessing:
             end_date (_type_): The End Date of the time frame | If None, latest date is used
 
         Returns:
-            _type_: Returns the Data as Json
+            _type_: Returns the Data List filled with Dicts
         """
         mili_start_date = TimeConversions.convertDateTimeToCurrentMillis(start_date) if (start_date != None and start_date != '') else ''
         mili_end_date =  TimeConversions.convertDateTimeToCurrentMillis(end_date) if (end_date != None and end_date != '') else ''
 
         r = requests.get(c.API_ADRESS + "patientArrival?from=" + str(mili_start_date) + "&to=" + str(mili_end_date)) #Get Data in TimeFrame
 
-        return r.json()# Return all Data as Json
+        return r.json()
 
-    def getDataOfDay(self,json_data, day, hospitalID):#Gets the Amount of Transports on a given weekday as average ordered by hour of day
-        
+    def filterData(self, json_data : list, filter_criteria : str, filter_value):
+        """Return all Data from json_data that fits the filter criteria
+
+        Args:
+            json_data (_type_): The json data to be filtered
+            filter_criteria (_type_): The filter criteria
+            filter_value (_type_): The filter value
+        Returns:
+            _type_: Returns the filtered data list
+        """
+        filtered_data = [x for x in json_data if x[filter_criteria] == filter_value] #Only adds new Elements to the list if they fit the filter criteria
+        return filtered_data
+            
+
+    def getDataOfDay(self,json_data, week_day, hospitalID):#Gets the Amount of Transports on a given weekday as average ordered by hour of day
+        """Gets the Average Amount of Transports per department on a given week_day ordered by hours of day
+
+        Args:
+            json_data (_type_): The Json Data to be processed
+            week_day (_type_): The WeekDay to be processed
+            hospitalID (_type_): The Id of the hospital
+
+        Returns:
+            _type_: Returns a dict containing the average amount of transports per department on a given weekday ordered by hours of day
+        """
 
         #Get the amount of times given week day has occured in time -> used to calculate average value later
         start_date = TimeConversions.convertCurrentMillisToDateTime(json_data[0]['created'])
@@ -40,7 +63,7 @@ class DataProcessing:
         countOfDays = [0] * 7
         for weekday in range(0,7):
             countOfDays[weekday] = self.count_weekdays(start_date,end_date,weekday)
-        countOfDay = countOfDays[day]
+        countOfDay = countOfDays[week_day]
         
         hours_data_list = [0] * 24 #used to store amount of drives in given hour frame
         for item in json_data:
@@ -49,7 +72,7 @@ class DataProcessing:
             weekDay = dateTime.weekday()
 
 
-            if(weekDay==day and ( hospitalID == None or hospitalID == '' or item['hospitalId'] == int(hospitalID) ) ): # We only need Data from the Weekday we are looking at and correct hospitalID
+            if(weekDay==week_day and ( hospitalID == None or hospitalID == '' or item['hospitalId'] == int(hospitalID) ) ): # We only need Data from the Weekday we are looking at and correct hospitalID
                 hour = dateTime.hour
                 hours_data_list[hour] += 1
             #Get the average by dividing through amount of days    
@@ -59,7 +82,7 @@ class DataProcessing:
         sonstige = [0] * 24
         for hour in range(0,24):
             hours_data_list[hour] = hours_data_list[hour] / countOfDay if countOfDay > 0 else hours_data_list[hour]
-            biggestDepartments = self.hourlyCountDepartments(day,hour, countOfDay,json_data,hospitalID)
+            biggestDepartments = self.hourlyCountDepartments(week_day,hour, countOfDay,json_data,hospitalID)
 
             departmentsum = biggestDepartments[0][1] + biggestDepartments[1][1] + biggestDepartments[2][1]
             
