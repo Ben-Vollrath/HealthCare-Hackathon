@@ -15,17 +15,21 @@ class DataProcessing:
         pass
 
     def sendRequest(self,start_date,end_date):
-            if(start_date == None or start_date == '' or end_date == '' or end_date == None):
-                r = requests.get(c.API_ADRESS + "patientArrival") #Get all Data
-            else:
+        """Sends Request to the API and returns the Data as Json
 
-                mili_start_date = TimeConversions.convertDateTimeToCurrentMillis(start_date)
-                mili_end_date =  TimeConversions.convertDateTimeToCurrentMillis(end_date)
+        Args:
+            start_date (_type_): The Start date of the time frame | If None, earlierst date is used
+            end_date (_type_): The End Date of the time frame | If None, latest date is used
 
-                r = requests.get(c.API_ADRESS + "patientArrival?from=" + str(mili_start_date) + "&to=" + str(mili_end_date)) #Get Data in TimeFrame
+        Returns:
+            _type_: Returns the Data as Json
+        """
+        mili_start_date = TimeConversions.convertDateTimeToCurrentMillis(start_date) if (start_date != None and start_date != '') else ''
+        mili_end_date =  TimeConversions.convertDateTimeToCurrentMillis(end_date) if (end_date != None and end_date != '') else ''
 
-                
-            return r.json()# Return all Data as Json
+        r = requests.get(c.API_ADRESS + "patientArrival?from=" + str(mili_start_date) + "&to=" + str(mili_end_date)) #Get Data in TimeFrame
+
+        return r.json()# Return all Data as Json
 
     def getDataOfDay(self,json_data, day, hospitalID):#Gets the Amount of Transports on a given weekday as average ordered by hour of day
         
