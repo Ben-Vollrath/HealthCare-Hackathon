@@ -10,7 +10,8 @@ import constants as c
 from TimeConversions import TimeConversions
 
 class DataProcessing:   
-
+    """The class to handle the DataProcessing
+    """
     def __init__(self):
         pass
 
@@ -94,26 +95,26 @@ class DataProcessing:
         Returns:
             _type_: Returns the three biggest departments on a given weekday and hour
         """
-        countUsedDepartmentArr = [0] * (len(transport_data)+1)
+        countUsedDepartmentArr = [0] * (len(transport_data)+1) #Array to count the amount of occurences of each department
 
         for item in transport_data:
             timeData = TimeConversions.convertCurrentMillisToDateTime(item['created'])
-            day_of_item = timeData.weekday()
-            hour_of_item = timeData.hour
+            day_of_item = timeData.weekday() #Get the weekday of the item
+            hour_of_item = timeData.hour #Get the hour of the item
 
             department_category = item['departmentCategory']
-            if(department_category != None and day_of_item == week_day):
-                if(hour == None or (hour != None and hour_of_item == hour) ):
-                    countUsedDepartmentArr[department_category['id']] += 1
+            if(department_category != None and day_of_item == week_day): #Only count if the item has a department and is on the given weekday
+                if(hour == None or (hour != None and hour_of_item == hour) ): #Only count if the item is on the given hour
+                    countUsedDepartmentArr[department_category['id']] += 1 #Increasse count of the department by one
         
 
         sortedIndex = self.find_top_three(countUsedDepartmentArr) #get Index from the 3 Biggest
 
-        countUsedDepartmentArr.sort(reverse=True)
+        countUsedDepartmentArr.sort(reverse=True) #Sort the array to get the 3 biggest departments
 
         dp0, dp1, dp2 = None, None, None
 
-        for item in transport_data:
+        for item in transport_data: #Go through all items and get the department name of the 3 biggest departments 
             department = item['departmentCategory']
             if(department == None):
                 continue
@@ -125,6 +126,7 @@ class DataProcessing:
             if(sortedIndex[2] == department['id']):
                 dp2 = department['name']
         
+        #Return the 3 biggest departments names and their count
         out0 = [dp0, countUsedDepartmentArr[0]] if dp0 is not None else ("No department", 0)
         out1 = [dp1, countUsedDepartmentArr[1]] if dp1 is not None else ("No department", 0)
         out2 = [dp2, countUsedDepartmentArr[2]] if dp2 is not None else ("No department", 0)
@@ -142,6 +144,8 @@ class DataProcessing:
         Returns:
             _type_: Returns the data of a week or hour | Data is averaged
         """
+
+        
         countOfDays = self.countOccurencesOfDays(transport_data)
         return_list_len = len(return_list)
 
@@ -159,30 +163,35 @@ class DataProcessing:
             elif(return_list_len == 7):#If we want the data ordered by weekdays
                 return_list[weekDay] += 1
         
-        data = {}
+        return_dic = {}
 
         sonstige = [0] * return_list_len
-        for x in range(0, return_list_len):
-
+        for x in range(0, return_list_len): #Go through list
+            
+            #Get the 3 biggest departments
             biggestDepartments = self.countDepartments(week_day if return_list_len == 24 else x , transport_data , x if return_list_len == 24 else None) #Get the 3 biggest departments
             
 
-
+            #Get the average of the data
             return_list[x] = return_list[x] / (countOfDays[x] if return_list_len == 7 else countOfDays[week_day])
 
+            #Get the average of the departments
             for i in range(0, len(biggestDepartments)):
                 biggestDepartments[i][1] = biggestDepartments[i][1] / (countOfDays[x] if return_list_len == 7 else countOfDays[week_day])
 
+
             sum_of_departments = biggestDepartments[0][1] + biggestDepartments[1][1] + biggestDepartments[2][1]
 
+            #Get average of sonstige by sum of all trips - sum of the 3 biggest departments
             sonstige = return_list[x] - sum_of_departments
 
-            data[x] = [["Sonstige ", sonstige],
+            #Add the data to the return dic
+            return_dic[x] = [["Sonstige ", sonstige],
                             ["Abteilung " + str(biggestDepartments[0][0]), biggestDepartments[0][1]],
                             ["Abteilung " + str(biggestDepartments[1][0]), biggestDepartments[1][1]],
                             ["Abteilung " + str(biggestDepartments[2][0]), biggestDepartments[2][1]]]
         
-        return data
+        return return_dic
 
     def getDataOfDay(self,json_data, week_day):
         """Gets the Data of a Day
@@ -194,7 +203,7 @@ class DataProcessing:
         Returns:
             _type_: Returns the data of a day
         """
-        return_list = [0] * 24
+        return_list = [0] * 24 #24 hours in a day
         return self.getDataOfWeekOrDay(json_data, return_list, week_day)           
 
     def getDataOfWeek(self,json_data):
@@ -206,7 +215,7 @@ class DataProcessing:
         Returns:
             _type_: Returns the data of a week
         """
-        return_list = [0] * 7
+        return_list = [0] * 7 #7 days in a week
         return self.getDataOfWeekOrDay(json_data, return_list, None)
 
     def find_top_three(self,lst):

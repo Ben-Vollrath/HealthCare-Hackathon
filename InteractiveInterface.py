@@ -18,14 +18,16 @@ class InteractiveInterface:
     def __init__(self,Dataprocesser):
         self.app = dash.Dash(__name__)
         self.dp = Dataprocesser
-        self.create_layout()
+        #On object creation, create the layout and the callbacks
+        self.create_layout() 
         self.create_callbacks()
 
     #app = dash.Dash(__name__) # Create the Dash app
     #dp  = DataProcesser() # Create the DataProcesser object
     
     def create_layout(self):
-        # Create the layout
+        """Create the layout of the Dash app
+        """
         self.app.layout = html.Div([
         html.H1('Interface zu Darstellung von Krankenfahrten', style={'textAlign': 'center', 'color': '#4B0082'}), # Create the title
         dcc.Graph(id='graph', style={'height': '70vh', 'width': '80vw', 'margin': 'auto'}), # Create the graph
@@ -72,10 +74,10 @@ class InteractiveInterface:
                 Returns the plot of the graph
             """
 
-            changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
+            changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0] #Go through changes
             if 'update-button' in changed_id: # If the button has been clicked
                 if n_clicks > 0:
-
+                    #If update button is clicked we update the week graph
                     sum_list = [0] * 7
                     r = self.dp.sendRequest(start_date, end_date)
 
@@ -89,6 +91,7 @@ class InteractiveInterface:
 
             elif 'graph' in changed_id:
                 if clickData:
+                    #If Graph is clicked we update the day graph
                     weekdays = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
                     day = weekdays.index(clickData['points'][0]['x'])
 
@@ -106,6 +109,11 @@ class InteractiveInterface:
             return GraphPlot.plotEmpty()
         
     def run_interface(self,debug):
+        """Run the Dash app
+
+        Args:
+            debug (_type_): If debug is true, the app will be run in debug mode
+        """
         self.app.run_server(debug=debug) # Run the Dash app
 
 

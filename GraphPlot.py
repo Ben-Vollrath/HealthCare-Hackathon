@@ -4,7 +4,15 @@ import plotly.graph_objects as go
 class GraphPlot:
     @staticmethod
     def plotStackedBarChartDay(data, selected_day):
-    
+        """Creates a stacked bar chart for the given data of a day
+
+        Args:
+            data (_type_): The INPUT data to be processed
+            selected_day (_type_): The selected day
+
+        Returns:
+            _type_: Returns the Graph with x hours of day and y amount of transports
+        """
         fig = go.Figure()
 
         num_tasks_per_hour = len(data[0])
@@ -34,7 +42,14 @@ class GraphPlot:
         return fig
     @staticmethod
     def plotStackedBarChartWeek(data):
-    
+        """Creates a stacked bar chart for the given data of a week
+
+        Args:
+            data (_type_): The INPUT data to be processed
+
+        Returns:
+            _type_:  Returns the Graph with x weekdays of day and y amount of transports
+        """
         fig = go.Figure()
 
         num_tasks_per_day = len(data[0])
@@ -65,5 +80,10 @@ class GraphPlot:
 
     @staticmethod
     def plotEmpty():
+        """Creates an empty Graph
+
+        Returns:
+            _type_: Returns the Graph
+        """
         # Create empty figure
         return go.Figure()
